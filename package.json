@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
-    "@expo-google-fonts/dm-mono": "^0.3.0",
-    "@expo-google-fonts/dm-sans": "^0.3.0",
-    "@expo-google-fonts/playfair-display": "^0.3.0",
+    "@expo-google-fonts/dm-mono": "^0.4.2",
+    "@expo-google-fonts/dm-sans": "^0.4.2",
+    "@expo-google-fonts/playfair-display": "^0.4.2",
+    "@expo/vector-icons": "^15.1.1",
     "expo": "~56.0.8",
-    "expo-font": "~13.3.1",
+    "expo-font": "^56.0.5",
     "expo-status-bar": "~56.0.4",
     "react": "19.2.3",
     "react-native": "0.85.3"
