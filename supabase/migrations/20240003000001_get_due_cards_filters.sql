@@ -54,7 +54,7 @@ as $$
   from public.user_progress up
   join public.terms t on t.id = up.term_id
   where up.user_id = auth.uid()
-    and up.next_review_at <= now()
+    and up.next_review_at <= current_timestamp
     and (p_body_systems is null or t.body_system::text = any(p_body_systems))
     and (p_regions      is null or t.body_region        = any(p_regions))
     and (p_organs       is null or t.organ              = any(p_organs))
@@ -87,7 +87,7 @@ as $$
   from public.user_progress up
   join public.terms t on t.id = up.term_id
   where up.user_id = auth.uid()
-    and up.next_review_at <= now()
+    and up.next_review_at <= current_timestamp
     and (p_body_systems is null or t.body_system::text = any(p_body_systems))
     and (p_regions      is null or t.body_region        = any(p_regions))
     and (p_organs       is null or t.organ              = any(p_organs))
