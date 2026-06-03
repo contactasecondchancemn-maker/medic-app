@@ -45,7 +45,7 @@ as $$
     t.term,
     t.ipa,
     t.definition,
-    t.body_system::text,
+    t.system_tag::text,
     up.confidence,
     up.next_review_at,
     up.review_count,
@@ -55,7 +55,7 @@ as $$
   join public.terms t on t.id = up.term_id
   where up.user_id = auth.uid()
     and up.next_review_at <= current_timestamp
-    and (p_body_systems is null or t.body_system::text = any(p_body_systems))
+    and (p_body_systems is null or t.system_tag::text = any(p_body_systems))
     and (p_regions      is null or t.body_region        = any(p_regions))
     and (p_organs       is null or t.organ              = any(p_organs))
     and (p_diff_min     is null or coalesce(t.difficulty, 3) >= p_diff_min)
@@ -88,7 +88,7 @@ as $$
   join public.terms t on t.id = up.term_id
   where up.user_id = auth.uid()
     and up.next_review_at <= current_timestamp
-    and (p_body_systems is null or t.body_system::text = any(p_body_systems))
+    and (p_body_systems is null or t.system_tag::text = any(p_body_systems))
     and (p_regions      is null or t.body_region        = any(p_regions))
     and (p_organs       is null or t.organ              = any(p_organs))
     and (p_diff_min     is null or coalesce(t.difficulty, 3) >= p_diff_min)
