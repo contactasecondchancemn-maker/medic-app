@@ -1,7 +1,7 @@
 -- Phase 3 - extend get_due_cards() with optional filter parameters
 --
 -- New optional parameters (all nullable - null means "no filter"):
---   p_body_systems   body_system[]   - multi-select systems
+--   p_body_systems   text[]          - multi-select body systems (cast to body_system inside)
 --   p_regions        text[]          - anatomical regions (Head & Neck, Thorax, ...)
 --   p_organs         text[]          - free-text organ names (stored in terms.organ)
 --   p_diff_min       smallint        - difficulty lower bound (inclusive)
@@ -26,19 +26,19 @@ create index if not exists terms_organ_idx on public.terms (organ)
 -- 2. Filtered get_due_cards
 
 create or replace function public.get_due_cards(
-  card_limit    int              default 50,
-  p_body_systems public.body_system[] default null,
-  p_regions     text[]           default null,
-  p_organs      text[]           default null,
-  p_diff_min    smallint         default null,
-  p_diff_max    smallint         default null
+  card_limit    int      default 50,
+  p_body_systems text[]  default null,
+  p_regions     text[]   default null,
+  p_organs      text[]   default null,
+  p_diff_min    smallint default null,
+  p_diff_max    smallint default null
 )
 returns table (
   term_id        uuid,
   term           text,
   ipa            text,
   definition     text,
-  body_system    public.body_system,
+  body_system    text,
   confidence     smallint,
   next_review_at timestamptz,
   review_count   int,
@@ -54,7 +54,7 @@ as $$
     t.term,
     t.ipa,
     t.definition,
-    t.body_system,
+    t.body_system::text,
     up.confidence,
     up.next_review_at,
     up.review_count,
@@ -65,7 +65,7 @@ as $$
   where up.user_id = auth.uid()
     and up.next_review_at <= now()
     -- body system filter (null = all systems)
-    and (p_body_systems is null or t.body_system = any(p_body_systems))
+    and (p_body_systems is null or t.body_system::text = any(p_body_systems))
     -- region filter
     and (p_regions is null or t.body_region = any(p_regions))
     -- organ filter
@@ -77,7 +77,7 @@ as $$
   limit card_limit;
 $$;
 
-grant execute on function public.get_due_cards(int, public.body_system[], text[], text[], smallint, smallint)
+grant execute on function public.get_due_cards(int, text[], text[], text[], smallint, smallint)
   to authenticated;
 
 -- 3. Count helper
@@ -86,11 +86,11 @@ grant execute on function public.get_due_cards(int, public.body_system[], text[]
 -- Used by the live filter badge without shipping card data.
 
 create or replace function public.get_due_cards_count(
-  p_body_systems public.body_system[] default null,
-  p_regions     text[]           default null,
-  p_organs      text[]           default null,
-  p_diff_min    smallint         default null,
-  p_diff_max    smallint         default null
+  p_body_systems text[]   default null,
+  p_regions     text[]    default null,
+  p_organs      text[]    default null,
+  p_diff_min    smallint  default null,
+  p_diff_max    smallint  default null
 )
 returns bigint
 language sql
@@ -102,12 +102,12 @@ as $$
   join public.terms t on t.id = up.term_id
   where up.user_id = auth.uid()
     and up.next_review_at <= now()
-    and (p_body_systems is null or t.body_system = any(p_body_systems))
+    and (p_body_systems is null or t.body_system::text = any(p_body_systems))
     and (p_regions      is null or t.body_region = any(p_regions))
     and (p_organs       is null or t.organ       = any(p_organs))
     and (p_diff_min is null or coalesce(t.difficulty, 3) >= p_diff_min)
     and (p_diff_max is null or coalesce(t.difficulty, 3) <= p_diff_max);
 $$;
 
-grant execute on function public.get_due_cards_count(public.body_system[], text[], text[], smallint, smallint)
+grant execute on function public.get_due_cards_count(text[], text[], text[], smallint, smallint)
   to authenticated;
