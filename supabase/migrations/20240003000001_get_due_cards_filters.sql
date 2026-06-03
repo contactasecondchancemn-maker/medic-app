@@ -1,18 +1,18 @@
--- Phase 3 — extend get_due_cards() with optional filter parameters
+-- Phase 3 - extend get_due_cards() with optional filter parameters
 --
--- New optional parameters (all nullable — null means "no filter"):
---   p_body_systems   body_system[]   — multi-select systems
---   p_regions        text[]          — anatomical regions (Head & Neck, Thorax, …)
---   p_organs         text[]          — free-text organ names (stored in terms.organ)
---   p_diff_min       smallint        — difficulty lower bound (inclusive)
---   p_diff_max       smallint        — difficulty upper bound (inclusive)
+-- New optional parameters (all nullable - null means "no filter"):
+--   p_body_systems   body_system[]   - multi-select systems
+--   p_regions        text[]          - anatomical regions (Head & Neck, Thorax, ...)
+--   p_organs         text[]          - free-text organ names (stored in terms.organ)
+--   p_diff_min       smallint        - difficulty lower bound (inclusive)
+--   p_diff_max       smallint        - difficulty upper bound (inclusive)
 --
 -- Also adds the helper function get_due_cards_count() which returns just the
 -- integer count for the live-preview badge (avoids shipping full rows to the client).
 --
 -- Adds terms.body_region and terms.organ columns used by the filter system.
 
--- 1. New columns on terms ────────────────────────────────────────────────────────────────
+-- 1. New columns on terms
 
 alter table public.terms
   add column if not exists body_region text,  -- e.g. 'Head & Neck', 'Thorax'
@@ -23,7 +23,7 @@ create index if not exists terms_body_region_idx on public.terms (body_region)
 create index if not exists terms_organ_idx on public.terms (organ)
   where organ is not null;
 
--- 2. Filtered get_due_cards ───────────────────────────────────────────────────────────────
+-- 2. Filtered get_due_cards
 
 create or replace function public.get_due_cards(
   card_limit    int              default 50,
@@ -80,7 +80,7 @@ $$;
 grant execute on function public.get_due_cards(int, public.body_system[], text[], text[], smallint, smallint)
   to authenticated;
 
--- 3. Count helper ────────────────────────────────────────────────────────────────────
+-- 3. Count helper
 --
 -- Identical WHERE clause, returns a single integer.
 -- Used by the live filter badge without shipping card data.
