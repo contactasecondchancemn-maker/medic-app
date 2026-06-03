@@ -2,14 +2,14 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import type { BodySystem } from '../components/FlashCard';
 
-// ─── Constants ────────────────────────────────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────────────────────────────────
 
 export const DAILY_CAP = 150;
 export const SECONDS_PER_CARD = 15;
 
 const MAX_FETCH = 500;
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────────────────────────────
 
 export interface DueCard {
   termId: string;
@@ -20,8 +20,6 @@ export interface DueCard {
   confidence: number;
   nextReviewAt: string;
   reviewCount: number;
-  easeFactor: number;
-  intervalDays: number;
 }
 
 export type QueueStatus = 'idle' | 'loading' | 'ready' | 'active' | 'complete' | 'error';
@@ -82,25 +80,23 @@ export interface ReviewQueue {
   reload: (filters?: QueueFilters) => void;
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────────────────────
 
 function rowToCard(row: Record<string, unknown>): DueCard {
   return {
-    termId:       row.term_id       as string,
-    term:         row.term          as string,
-    ipa:          (row.ipa          as string | null) ?? undefined,
-    definition:   row.definition    as string,
-    bodySystem:   (row.body_system  as BodySystem | null) ?? undefined,
-    confidence:   row.confidence    as number,
+    termId:       row.term_id        as string,
+    term:         row.term           as string,
+    ipa:          (row.ipa           as string | null) ?? undefined,
+    definition:   row.definition     as string,
+    bodySystem:   (row.body_system   as BodySystem | null) ?? undefined,
+    confidence:   row.confidence     as number,
     nextReviewAt: row.next_review_at as string,
     reviewCount:  row.review_count   as number,
-    easeFactor:   Number(row.ease_factor),
-    intervalDays: row.interval_days  as number,
   };
 }
 
 function compress(cards: DueCard[]): DueCard[] {
-  return [...cards].sort((a, b) => a.easeFactor - b.easeFactor).slice(0, DAILY_CAP);
+  return [...cards].sort((a, b) => a.confidence - b.confidence).slice(0, DAILY_CAP);
 }
 
 function estimateMinutes(count: number): number {
@@ -122,7 +118,7 @@ function filtersToRpcParams(f: QueueFilters) {
   };
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────────────
+// ─── Hook ──────────────────────────────────────────────────────────────────────────────────
 
 export function useReviewQueue(initialFilters: QueueFilters = EMPTY_FILTERS): ReviewQueue {
   const [status, setStatus]             = useState<QueueStatus>('idle');

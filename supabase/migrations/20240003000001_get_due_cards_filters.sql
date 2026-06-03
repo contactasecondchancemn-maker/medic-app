@@ -13,7 +13,7 @@ create index if not exists terms_organ_idx
   where organ is not null;
 
 -- get_due_cards: returns due cards with optional filters
--- All filter params are nullable text[] or smallint; null means no filter applied.
+-- All filter params are nullable; null means no filter applied.
 
 create or replace function public.get_due_cards(
   card_limit     int      default 50,
@@ -31,9 +31,7 @@ returns table (
   body_system    text,
   confidence     smallint,
   next_review_at timestamptz,
-  review_count   int,
-  ease_factor    numeric,
-  interval_days  int
+  review_count   int
 )
 language sql
 stable
@@ -48,16 +46,14 @@ as $$
     t.system_tag::text,
     up.confidence,
     up.next_review_at,
-    up.review_count,
-    up.ease_factor,
-    up.interval_days
+    up.review_count
   from public.user_progress up
   join public.terms t on t.id = up.term_id
   where up.user_id = auth.uid()
     and up.next_review_at <= current_timestamp
     and (p_body_systems is null or t.system_tag::text = any(p_body_systems))
-    and (p_regions      is null or t.body_region        = any(p_regions))
-    and (p_organs       is null or t.organ              = any(p_organs))
+    and (p_regions      is null or t.body_region      = any(p_regions))
+    and (p_organs       is null or t.organ            = any(p_organs))
     and (p_diff_min     is null or coalesce(t.difficulty, 3) >= p_diff_min)
     and (p_diff_max     is null or coalesce(t.difficulty, 3) <= p_diff_max)
   order by up.next_review_at asc
@@ -68,7 +64,6 @@ grant execute on function public.get_due_cards(int, text[], text[], text[], smal
   to authenticated;
 
 -- get_due_cards_count: same filters, returns only the count
--- Used by the session filter live-preview badge.
 
 create or replace function public.get_due_cards_count(
   p_body_systems text[]   default null,
@@ -89,8 +84,8 @@ as $$
   where up.user_id = auth.uid()
     and up.next_review_at <= current_timestamp
     and (p_body_systems is null or t.system_tag::text = any(p_body_systems))
-    and (p_regions      is null or t.body_region        = any(p_regions))
-    and (p_organs       is null or t.organ              = any(p_organs))
+    and (p_regions      is null or t.body_region      = any(p_regions))
+    and (p_organs       is null or t.organ            = any(p_organs))
     and (p_diff_min     is null or coalesce(t.difficulty, 3) >= p_diff_min)
     and (p_diff_max     is null or coalesce(t.difficulty, 3) <= p_diff_max);
 $$;
